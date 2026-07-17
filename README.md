@@ -21,9 +21,10 @@ tree (an inclusion proof) without revealing which entry is theirs to anyone
 else.
 
 The cryptographic design (trust model, what's unconditional vs.
-conditional-but-auditable) is documented in the main repo:
-[`docs/04-implementation-plan/adr/`](https://github.com/awsventures/aws-confidential-by-design/tree/main/docs/04-implementation-plan/adr),
-specifically the integrity-anchor and trust-model-and-boundary ADRs.
+conditional-but-auditable) is summarized on the
+[trust page](https://www.candidsignal.com/trust.html); the source that
+implements it is public in
+[`awsventures/candidsignal`](https://github.com/awsventures/candidsignal).
 
 ## Files in this repo
 
@@ -41,16 +42,16 @@ canonical encoding of the rest.
 ## How to verify (no trust in us required)
 
 The verification tool is the public, infrastructure-free audit CLI that ships
-in the main repo — it reads only plain JSON files, makes no network calls,
+in the core repo — it reads only plain JSON files, makes no network calls,
 and trusts nothing but the log public key you already have (`logkey.spki.hex`
 in this repo).
 
-Clone both repos, then from the main repo:
+Clone both repos, then from the core repo:
 
 ```sh
-git clone https://github.com/awsventures/aws-confidential-by-design.git
+git clone https://github.com/awsventures/candidsignal.git
 git clone https://github.com/awsventures/aws-cbd-transparency-log.git
-cd aws-confidential-by-design/packages/anonymity-core
+cd candidsignal/packages/anonymity-core
 
 # 1. Verify the published tree head is genuinely signed by the log key.
 node --experimental-strip-types --disable-warning=ExperimentalWarning \
@@ -67,9 +68,9 @@ node --experimental-strip-types --disable-warning=ExperimentalWarning \
 
 # 3. A respondent verifies their OWN receipt is included in a published tree
 #    (needs their entry + inclusion proof, obtained from the deployment they
-#    responded through, e.g. the mock-vendor sandbox's /audit/locate endpoint
-#    — see sandbox/README.md in the main repo for the exact file-format
-#    contract of entry-<i>.json / proof-<i>.json / locator.json).
+#    responded through — e.g. the live demo at app.candidsignal.com prints
+#    the entry-<i>.json / proof-<i>.json / locator.json for the response
+#    you just submitted).
 node --experimental-strip-types --disable-warning=ExperimentalWarning \
   audit/audit.ts verify-inclusion \
   <entry-file> <index> \
@@ -88,8 +89,9 @@ commands print a human-readable PASS/FAIL line.
 
 ## Publication
 
-STHs land here via `packages/services/src/git-sth-target.ts` in the main
-repo (`publishSthToGitRepo`): a small wrapper that syncs a local working copy
+STHs land here via `packages/services/src/git-sth-target.ts` in the
+[candidsignal](https://github.com/awsventures/candidsignal) repo
+(`publishSthToGitRepo`): a small wrapper that syncs a local working copy
 of this repo, writes the new STH files (reusing the same `publishSth` that
 writes every other target), commits, and pushes. It shells out to `git`
 rather than depending on a git library, so this repo's history is exactly
@@ -100,6 +102,6 @@ needed to audit the audit trail itself.
 
 The first STH in this repo (`sth-1.json` / `latest.json`) was published from
 a single real respondent completing the full issue → redeem → submit flow in
-the [mock-vendor sandbox](https://github.com/awsventures/aws-confidential-by-design/tree/main/sandbox)
-demo, not synthetic test fixtures — the same cryptographic path a real survey
+the live demo at [app.candidsignal.com](https://app.candidsignal.com),
+not synthetic test fixtures — the same cryptographic path a real survey
 integration uses.
